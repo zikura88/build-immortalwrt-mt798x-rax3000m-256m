@@ -177,6 +177,3 @@ jobs:
           # 未测试×
           
           IP: 192.168.5.1 | Password: none
-
-  UPLOAD_OUTPUT: true
-
