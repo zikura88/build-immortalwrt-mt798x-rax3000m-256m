@@ -26,6 +26,6 @@ sed -i 's/192.168.1.1/192.168.5.1/g' package/base-files/files/bin/config_generat
 
 #删除冲突的软件包
 #rm -rf ./package/istore
-#rm -rf ./feeds/kenzo/luci-app-quickstart
-#rm -rf ./feeds/kenzo/luci-app-store
-#rm -rf ./feeds/kenzo/luci-lib-taskd
+rm -rf ./feeds/kenzo/luci-app-quickstart
+rm -rf ./feeds/kenzo/luci-app-store
+rm -rf ./feeds/kenzo/luci-lib-taskd
