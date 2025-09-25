@@ -38,7 +38,7 @@ jobs:
 
     steps:
     - name: Checkout Repository (your repo with patches, config, scripts)
-      uses: actions/checkout@v4
+      uses: actions/checkout@main
       with:
         path: repo
 
