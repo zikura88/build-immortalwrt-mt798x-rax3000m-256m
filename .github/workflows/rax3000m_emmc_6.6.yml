@@ -140,6 +140,7 @@ jobs:
         
     - name: 整理输出文件
       run: |
+        cp $GITHUB_WORKSPACE/patches/libxcrypt-fix.patch ./patches/
         cd openwrt/bin/targets/*/*
         rm -rf packages
     
