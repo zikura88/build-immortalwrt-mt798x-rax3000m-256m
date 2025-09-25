@@ -95,7 +95,12 @@ jobs:
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: Apply libxcrypt patch
+      working-directory: /mnt/workdir/openwrt
+       # 确保目标目录存在
       run: |
+       # 确保目标目录存在
+       mkdir -p patches
+       cp $GITHUB_WORKSPACE/patches/libxcrypt-fix.patch patches/
        patch -p1 < patches/libxcrypt-fix.patch
 
     - name: Install feeds
