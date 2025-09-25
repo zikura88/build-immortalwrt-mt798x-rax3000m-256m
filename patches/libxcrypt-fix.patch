@@ -1,1 +1,14 @@
 
+diff --git a/feeds/packages/libs/libxcrypt/Makefile b/feeds/packages/libs/libxcrypt/Makefile
+index e5e1f4ca..3c4d5e6f 100644
+--- a/feeds/packages/libs/libxcrypt/Makefile
++++ b/feeds/packages/libs/libxcrypt/Makefile
+@@ -34,6 +34,7 @@ CONFIGURE_ARGS += \
+         --disable-obsolete-api \
+         --enable-hashes=solaris \
+         --with-pic
++        
++MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS) -Wno-format-nonliteral"
+
+ define Build/InstallDev
+
