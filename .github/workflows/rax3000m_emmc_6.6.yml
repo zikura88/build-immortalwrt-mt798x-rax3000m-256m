@@ -96,8 +96,7 @@ jobs:
 
     - name: Apply libxcrypt patch
       run: |
-    # 应用补丁，-p1 表示去掉路径前缀 a/ 和 b/
-    patch -p1 < patches/libxcrypt-fix.patch
+       patch -p1 < patches/libxcrypt-fix.patch
 
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
