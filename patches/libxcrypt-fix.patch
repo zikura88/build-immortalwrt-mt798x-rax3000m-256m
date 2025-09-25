@@ -11,4 +11,3 @@ index e5e1f4ca..3c4d5e6f 100644
 +MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS) -Wno-format-nonliteral"
 
  define Build/InstallDev
-
