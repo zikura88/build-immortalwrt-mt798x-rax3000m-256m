@@ -1,0 +1,12 @@
+diff --git a/feeds/packages/libs/libxcrypt/Makefile b/feeds/packages/libs/libxcrypt/Makefile
+index e5e1f4ca..3c4d5e6f 100644
+--- a/feeds/packages/libs/libxcrypt/Makefile
++++ b/feeds/packages/libs/libxcrypt/Makefile
+@@ -30,6 +30,7 @@ CONFIGURE_ARGS += \
+ 	--enable-crypt \
+ 	--enable-sha256-obfuscation \
+ 	--enable-sha512-obfuscation
++MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS) -Wno-format-nonliteral"
+
+ define Build/InstallDev
+ 	$(INSTALL_DIR) $(1)/usr/include
