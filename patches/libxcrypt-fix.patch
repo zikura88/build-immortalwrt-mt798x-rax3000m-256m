@@ -1,13 +1,17 @@
 diff --git a/feeds/packages/libs/libxcrypt/Makefile b/feeds/packages/libs/libxcrypt/Makefile
-index 0000000..1111111 100644
+index abc1234..def5678 100644
 --- a/feeds/packages/libs/libxcrypt/Makefile
 +++ b/feeds/packages/libs/libxcrypt/Makefile
-@@ -42,7 +42,7 @@
+@@ -42,6 +42,7 @@ CONFIGURE_ARGS += \
+ 	--disable-shared \
+ 	--disable-failure-tokens \
+ 	--disable-xcrypt-compat-files \
  	--disable-obsolete-api \
  	--enable-hashes=solaris \
  	--with-pic
--
-+TARGET_CFLAGS += -Wno-error=format-nonliteral
+
++MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS) -Wno-error=format-nonliteral"
+
  define Build/InstallDev
  	$(INSTALL_DIR) $(1)/usr/include
  	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
