@@ -91,13 +91,13 @@ jobs:
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
 
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
     - name: Replace libxcrypt Makefile with custom version
       run: |
           cp repo/custom-files/libxcrypt-Makefile feeds/packages/libs/libxcrypt/Makefile
           echo "✅ Custom Makefile applied!"
-
-    - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
