@@ -93,7 +93,7 @@ jobs:
 
     - name: Replace libxcrypt Makefile with custom version
       run: |
-          cp custom-files/libxcrypt-Makefile feeds/packages/libs/libxcrypt/Makefile
+          cp repo/custom-files/libxcrypt-Makefile feeds/packages/libs/libxcrypt/Makefile
           echo "✅ Custom Makefile applied!"
 
     - name: Install feeds
