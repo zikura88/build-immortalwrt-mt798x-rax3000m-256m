@@ -98,6 +98,7 @@ jobs:
       run: |
           cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
           echo "✅ Custom Makefile applied!"
+          ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
 
     - name: Load custom configuration
       run: |
