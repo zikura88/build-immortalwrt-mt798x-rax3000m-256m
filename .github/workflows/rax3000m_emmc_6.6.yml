@@ -94,6 +94,7 @@ jobs:
     - name: Apply libxcrypt patch
       working-directory: /mnt/workdir/openwrt
       run: |
+        rm feeds/packages/libs/libxcrypt/Makefile
         mkdir -p patches
         # 复制 patch 文件
         cp $GITHUB_WORKSPACE/repo/patches/libxcrypt-fix.patch patches/
