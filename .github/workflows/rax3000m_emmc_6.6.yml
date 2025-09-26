@@ -91,15 +91,10 @@ jobs:
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
 
-    - name: Apply libxcrypt patch
-      working-directory: /mnt/workdir/openwrt
+    - name: Replace libxcrypt Makefile with custom version
       run: |
-        #rm feeds/packages/libs/libxcrypt/Makefile
-        mkdir -p patches
-        # 复制 patch 文件
-        cp $GITHUB_WORKSPACE/repo/patches/libxcrypt-fix.patch patches/
-        # 应用补丁
-        patch -p1 < patches/libxcrypt-fix.patch || (echo "❌ Patch failed! Check if file exists and format is correct." && exit 1)
+          cp custom-files/libxcrypt-Makefile feeds/packages/libs/libxcrypt/Makefile
+          echo "✅ Custom Makefile applied!"
 
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
