@@ -96,7 +96,7 @@ jobs:
 
     - name: Replace libxcrypt Makefile with custom version
       run: |
-          cp repo/custom-files/libxcrypt-Makefile feeds/packages/libs/libxcrypt/Makefile
+          cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
           echo "✅ Custom Makefile applied!"
 
     - name: Load custom configuration
