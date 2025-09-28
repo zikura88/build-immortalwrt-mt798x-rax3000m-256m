@@ -33,7 +33,7 @@ env:
   UPLOAD_OUTPUT: true
 
 jobs:
-   _rax3000m_emmc_5.4:
+   _rax3000m_emmc:
     runs-on: ubuntu-20.04
     permissions:
       contents: write
