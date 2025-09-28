@@ -11,7 +11,7 @@
 #
 
 # Modify default IP
-sed -i 's/192.168.1.1/192.168.5.1/g' package/base-files/files/bin/config_generate
+sed -i 's/192.168.6.1/192.168.5.1/g' package/base-files/files/bin/config_generate
 
 # Modify hostname
 #sed -i 's/ImmortalWrt/rax3000m_256m/g' package/base-files/files/bin/config_generate
@@ -26,6 +26,6 @@ sed -i 's/192.168.1.1/192.168.5.1/g' package/base-files/files/bin/config_generat
 
 #删除冲突的软件包
 #rm -rf ./package/istore
-rm -rf ./feeds/kenzo/luci-app-quickstart
-rm -rf ./feeds/kenzo/luci-app-store
-rm -rf ./feeds/kenzo/luci-lib-taskd
+#rm -rf ./feeds/kenzo/luci-app-quickstart
+#rm -rf ./feeds/kenzo/luci-app-store
+#rm -rf ./feeds/kenzo/luci-lib-taskd
