@@ -5,4 +5,8 @@
 * 感谢P3TERX,hanwckf,padavanonly,kenzo等大佬。
 * 登陆IP:192.168.5.1
   密码：空
-* 近期由于kenzo仓库添加了istore,导致和237仓库既有的istore的app在编译时冲突，请编译时注意在diy-part2.sh中加入命令删除某些重复的软件包。
+
+
+------------------------------
+增加用immortalwrt24.10 内核6.6编译的固件，后缀写6.6的就是。
+增加rax3000m emmc版路由器的固件。
