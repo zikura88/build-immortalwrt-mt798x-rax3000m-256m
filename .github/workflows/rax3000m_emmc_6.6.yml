@@ -24,7 +24,6 @@ env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: rax3000m_emmc_250929.config
   DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part3.sh  # 注意：原文件名是 diy-part3.sh，不是 diy-part2.sh
   DIY_P3_SH: diy-part3.sh
   TZ: Asia/Shanghai
   DEVICE: rax3000m_emmc
@@ -83,7 +82,7 @@ jobs:
 
     - name: Load custom feeds
       run: |
-        [ -e repo/$FEEDS_CONF ] && mv repo/$FEEDS_CONF openwrt/feeds.conf.default
+        #[ -e repo/$FEEDS_CONF ] && mv repo/$FEEDS_CONF openwrt/feeds.conf.default
         [ -e repo/$DIY_P1_SH ] && chmod +x repo/$DIY_P1_SH
         cd openwrt
         $GITHUB_WORKSPACE/repo/$DIY_P1_SH
