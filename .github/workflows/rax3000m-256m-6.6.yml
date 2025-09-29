@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: Build rax3000m_256_6.6
+name: Build rax3000m_256m_6.6
 
 on:
   repository_dispatch:
