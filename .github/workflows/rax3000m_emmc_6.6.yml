@@ -7,7 +7,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: Build rax3000m_emmc
+name: Build rax3000m_emmc_6.6
 
 on:
   repository_dispatch:
@@ -22,7 +22,7 @@ env:
   REPO_URL: https://github.com/zikura88/immortalwrt-mt798x-6.6.git
   REPO_BRANCH: openwrt-24.10-6.6
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: rax3000m_emmc_250925.config
+  CONFIG_FILE: rax3000m_emmc_250929.config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part3.sh  # 注意：原文件名是 diy-part3.sh，不是 diy-part2.sh
   DIY_P3_SH: diy-part3.sh
