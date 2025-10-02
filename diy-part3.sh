@@ -27,7 +27,7 @@ sed -i 's/192.168.6.1/192.168.5.1/g' package/base-files/files/bin/config_generat
 
 #删除冲突的软件包
 #rm -rf ./package/istore
-rm -rf ./feeds/small/luci-app-ssr-plus
-rm -rf ./feeds/small/luci-app-fchomo
-rm -rf ./feeds/small/luci-app-bypass
-rm -rf ./feeds/small/nikki
+#rm -rf ./feeds/small/luci-app-ssr-plus
+#rm -rf ./feeds/small/luci-app-fchomo
+#rm -rf ./feeds/small/luci-app-bypass
+#rm -rf ./feeds/small/nikki
