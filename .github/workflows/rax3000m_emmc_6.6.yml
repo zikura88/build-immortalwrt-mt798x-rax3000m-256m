@@ -28,6 +28,10 @@ env:
   TZ: Asia/Shanghai
   DEVICE: rax3000m_emmc
   UPLOAD_OUTPUT: true
+  # OpenClash 配置
+  CLASH_VERSION: v1.20.6          # 可改为 latest 或指定版本
+  CLASH_ARCH: amd64               # 根据你的设备架构设置：amd64 / arm64 / armv7
+  CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
   _rax3000m_emmc:
@@ -109,6 +113,31 @@ jobs:
         [ -e repo/$DIY_P3_SH ] && chmod +x repo/$DIY_P3_SH
         cd openwrt
         $GITHUB_WORKSPACE/repo/$DIY_P3_SH
+
+    - name: Download OpenClash Core Binaries
+      run: |
+        mkdir -p $CLASH_CORE_DIR
+
+        # 下载 Clash TUN 内核
+        #CLASH_URL="https://github.com/vernesong/OpenClash/releases/download/${CLASH_VERSION}/clash-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
+        echo "📥 下载 Clash 内核: $CLASH_URL"
+        #wget -O /tmp/clash.gz --no-check-certificate "$CLASH_URL" || { echo "❌ 下载 clash 失败"; exit 1; }
+        #gunzip /tmp/clash.gz
+        #mv /tmp/clash $CLASH_CORE_DIR/clash
+        #chmod +x $CLASH_CORE_DIR/clash
+
+        # 下载 Clash Meta 内核（可选）
+        META_URL="https://github.com/vernesong/OpenClash/releases/download/${CLASH_VERSION}/clash-meta-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
+        echo "📥 下载 Clash Meta 内核: $META_URL"
+        wget -O /tmp/clash-meta.gz --no-check-certificate "$META_URL" || { echo "⚠️ 下载 clash-meta 失败，可能该版本未提供"; }
+        if [ -f /tmp/clash-meta.gz ]; then
+          gunzip /tmp/clash-meta.gz
+          mv /tmp/clash-meta $CLASH_CORE_DIR/clash_meta
+          chmod +x $CLASH_CORE_DIR/clash_meta
+        fi
+
+        # 验证文件
+        ls -l $CLASH_CORE_DIR/
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
