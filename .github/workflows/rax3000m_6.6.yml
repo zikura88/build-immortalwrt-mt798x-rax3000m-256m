@@ -42,7 +42,7 @@ jobs:
         path: repo
 
     - name: 🖥️ 检查服务器配置
-      if: (!cancelled())
+      if: ${{ !cancelled() }}
       run: |
         echo "⚠️ 警告：若服务器性能不足，请及时取消任务并重试！"
         echo "✅ 已知编译成功CPU：8370C, 8171M"
@@ -231,7 +231,7 @@ jobs:
 
     - name: 📤 上传输出文件
       uses: actions/upload-artifact@v4
-      if: env.UPLOAD_OUTPUT == 'true' && !cancelled()
+      if: ${{ env.UPLOAD_OUTPUT == 'true' && !cancelled() }}
       with:
         name: ${{ env.DEVICE }}--${{ env.FILE_DATE }}
         path: openwrt/bin
@@ -244,7 +244,7 @@ jobs:
 
     - name: 📦 发布至 GitHub Release
       uses: ncipollo/release-action@v1
-      if: !cancelled()
+      if: ${{ !cancelled() }}
       with:
         tag: "${{ env.DEVICE }}--${{ env.FILE_DATE }}"
         artifacts: "openwrt/bin/targets/*/*/*"
