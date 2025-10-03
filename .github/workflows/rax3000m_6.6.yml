@@ -102,7 +102,7 @@ jobs:
           echo "✅ Custom Makefile applied!"
           ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
 
-      - name: Auto-Detect & Download Mihomo (arm64) with Validation
+    - name: Auto-Detect & Download Mihomo (arm64) with Validation
       run: |
         # ==================== 配置区 ====================
         MIHOMO_REPO="MetaCubeX/mihomo"
