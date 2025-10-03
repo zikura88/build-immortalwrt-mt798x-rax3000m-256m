@@ -101,6 +101,9 @@ jobs:
           cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
           echo "✅ Custom Makefile applied!"
           ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
+          
+          cd openwrt
+          $GITHUB_WORKSPACE/repo/$DIY_P3_SH
 
     - name: Auto-Detect & Download Mihomo (arm64) with Validation
       run: |
@@ -218,8 +221,7 @@ jobs:
 
         echo "🎉 Mihomo 内核安装与验证完成！"
         
-        cd openwrt
-        $GITHUB_WORKSPACE/repo/$DIY_P3_SH
+        
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
