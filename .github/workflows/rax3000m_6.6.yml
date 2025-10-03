@@ -28,6 +28,9 @@ env:
   TZ: Asia/Shanghai
   DEVICE: rax3000m
   UPLOAD_OUTPUT: true
+  # OpenClash 配置（可选，当前由脚本自动检测）
+  CLASH_VERSION: latest
+  CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
   _rax3000m:
