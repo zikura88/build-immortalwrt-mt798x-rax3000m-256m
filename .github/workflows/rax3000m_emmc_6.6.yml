@@ -5,7 +5,6 @@
 #
 # https://github.com/P3TERX/Actions-OpenWrt
 # Description: Build OpenWrt using GitHub Actions
-#
 
 name: Build rax3000m_emmc_6.6
 
@@ -28,8 +27,8 @@ env:
   TZ: Asia/Shanghai
   DEVICE: rax3000m_emmc
   UPLOAD_OUTPUT: true
-  # OpenClash 配置
-  CLASH_VERSION: latest          # 可改为 latest 或指定版本            # 根据你的设备架构设置：amd64 / arm64 / armv7
+  # OpenClash 配置（可选，当前由脚本自动检测）
+  CLASH_VERSION: latest
   CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
@@ -69,7 +68,7 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2404)
+        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2404) jq file
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
@@ -85,7 +84,7 @@ jobs:
 
     - name: Load custom feeds
       run: |
-        #[ -e repo/$FEEDS_CONF ] && mv repo/$FEEDS_CONF openwrt/feeds.conf.default
+        [ -e repo/$FEEDS_CONF ] && mv repo/$FEEDS_CONF openwrt/feeds.conf.default
         [ -e repo/$DIY_P1_SH ] && chmod +x repo/$DIY_P1_SH
         cd openwrt
         $GITHUB_WORKSPACE/repo/$DIY_P1_SH
@@ -98,17 +97,14 @@ jobs:
 
     - name: Replace libxcrypt Makefile with custom version
       run: |
-          cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
-          echo "✅ Custom Makefile applied!"
-          ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
+        cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
+        echo "✅ Custom Makefile applied!"
+        ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
 
     - name: Load custom configuration
       run: |
-        # 复制 files 目录（如果有）
         [ -e repo/files ] && mv repo/files openwrt/files
-        # 复制配置文件
         [ -e repo/$CONFIG_FILE ] && mv repo/$CONFIG_FILE openwrt/.config
-        # 赋执行权限并运行 diy-part3.sh
         [ -e repo/$DIY_P3_SH ] && chmod +x repo/$DIY_P3_SH
         cd openwrt
         $GITHUB_WORKSPACE/repo/$DIY_P3_SH
@@ -122,30 +118,30 @@ jobs:
         TIMEOUT=30
         # ================================================
 
-        # 获取当前工作目录（CI 工作区根目录）
         ROOT_DIR=$(pwd)
         FULL_CORE_DIR="$ROOT_DIR/$CORE_DIR"
+        FULL_TARGET_FILE="$FULL_CORE_DIR/clash_meta"
 
         echo "🔧 准备安装 Mihomo 内核..."
 
-        # 1. 创建核心目录
+        # 1. 确保目标目录存在
         mkdir -p "$FULL_CORE_DIR" || { echo "❌ 创建目录失败: $FULL_CORE_DIR"; exit 1; }
 
-        # 2. 进入 openwrt 目录
-        cd openwrt || { echo "❌ 进入 openwrt 目录失败"; exit 1; }
+        # 2. 确保 .config 存在
+        if [ ! -f "openwrt/.config" ]; then
+          echo "❌ 错误：openwrt/.config 不存在！请确认配置文件已正确复制"
+          exit 1
+        fi
 
-        echo "🔍 检测 OpenWrt 编译目标架构..."
-        TARGET_ARCH=$(grep CONFIG_TARGET_ARCH .config | cut -d= -f2 | tr -d '"')
-
+        # 3. 检测架构
+        TARGET_ARCH=$(grep CONFIG_TARGET_ARCH openwrt/.config | cut -d= -f2 | tr -d '"')
         if [ -z "$TARGET_ARCH" ]; then
           echo "❌ 无法读取 .config 中的架构信息！"
           exit 1
         fi
-
         echo "📌 原始架构: $TARGET_ARCH"
 
-        # === 修复点：提取通用架构名 ===
-        # 如果是 aarch64_xxx，提取为 aarch64
+        # 提取通用架构
         if [[ "$TARGET_ARCH" == aarch64* ]]; then
           COMMON_ARCH="aarch64"
         elif [[ "$TARGET_ARCH" == arm* ]]; then
@@ -153,94 +149,81 @@ jobs:
         else
           COMMON_ARCH="$TARGET_ARCH"
         fi
-
         echo "🔄 提取通用架构: $COMMON_ARCH"
 
-        # 映射到 mihomo 的架构命名
+        # 映射到 mihomo 架构
         case "$COMMON_ARCH" in
-          "aarch64")
-            MIHOMO_ARCH="arm64"
-            ;;
-          "arm")
-            MIHOMO_ARCH="armv7"
-            ;;
-          "x86_64")
-            MIHOMO_ARCH="amd64"
-            ;;
-          "i386")
-            MIHOMO_ARCH="386"
-            ;;
-          *)
-            echo "❌ 不支持的架构: $COMMON_ARCH"
-            exit 1
-            ;;
+          "aarch64") MIHOMO_ARCH="arm64" ;;
+          "arm")     MIHOMO_ARCH="armv7" ;;
+          "x86_64")  MIHOMO_ARCH="amd64" ;;
+          "i386")    MIHOMO_ARCH="386" ;;
+          *)         echo "❌ 不支持的架构: $COMMON_ARCH"; exit 1 ;;
         esac
-
         echo "✅ 映射为 Mihomo 架构: $MIHOMO_ARCH"
 
-        # 强制只允许 arm64（防止误用）
+        # 仅允许 arm64
         if [ "$MIHOMO_ARCH" != "arm64" ]; then
           echo "❌ 当前架构 ($MIHOMO_ARCH) 不受支持！本项目仅允许 arm64。"
           exit 1
         fi
 
-        # 3. 获取 Release 中匹配的 asset URL
-        echo "🌐 获取 GitHub Release 信息: $MIHOMO_REPO/releases/tag/$RELEASE_TAG"
+        # 4. 获取 Release 资产 URL
+        echo "🌐 获取 GitHub Release 信息..."
         ASSET_URL=$(curl -s --fail "https://api.github.com/repos/$MIHOMO_REPO/releases/tags/$RELEASE_TAG" | \
-          jq -r ".assets[].browser_download_url" | \
+          jq -r '.assets[].browser_download_url' | \
           grep -i "linux-$MIHOMO_ARCH" | \
           grep -i "alpha" | \
-          grep -i "\.gz$")
+          grep -i "\.gz$" | \
+          head -n1)
 
         if [ -z "$ASSET_URL" ]; then
-          echo "❌ 未在 $RELEASE_TAG 中找到 mihomo-linux-$MIHOMO_ARCH-alpha*.gz 文件！"
-          echo "💡 可能原因：网络问题、GitHub API 限流、或该版本未发布。"
+          echo "❌ 未找到 mihomo-linux-$MIHOMO_ARCH-alpha*.gz 文件！"
+          echo "💡 可能原因：网络问题、API 限流、版本未发布"
           exit 1
         fi
-
         echo "✅ 找到匹配内核: $ASSET_URL"
 
-        # 4. 下载并解压
+        # 5. 下载
         echo "📥 开始下载 mihomo 内核..."
         wget -O /tmp/mihomo.gz --no-check-certificate --timeout=$TIMEOUT --tries=3 "$ASSET_URL" || {
-          echo "❌ 下载失败，请检查网络或链接有效性。"
+          echo "❌ 下载失败，请检查网络"
           exit 1
         }
 
+        # 6. 解压
         gunzip /tmp/mihomo.gz || {
-          echo "❌ 解压失败，请检查文件完整性。"
+          echo "❌ 解压失败，请检查文件完整性"
           rm -f /tmp/mihomo.gz
           exit 1
         }
 
-        # 5. 移动到目标位置
-        mv /tmp/mihomo $FULL_CORE_DIR/clash_meta
-        chmod +x $CORE_DIR/clash_meta
+        # 7. 移动并设置权限（✅ 使用绝对路径 + ✅ 检查失败）
+        mv /tmp/mihomo "$FULL_TARGET_FILE" || {
+          echo "❌ 移动文件失败！目标路径: $FULL_TARGET_FILE"
+          echo "📁 检查父目录:"
+          ls -la "$ROOT_DIR/openwrt/files/etc/openclash/" || echo "❌ 目录不存在"
+          exit 1
+        }
+        chmod +x "$FULL_TARGET_FILE"
 
-        # 6. 校验文件类型（必须是 aarch64）
+        # 8. 校验文件类型
         echo "🧪 校验内核文件类型..."
-        if ! command -v file &> /dev/null; then
-          sudo apt-get install -y file
-        fi
-
-        FILE_INFO=$(file $FULL_CORE_DIR/clash_meta)
-
+        FILE_INFO=$(file "$FULL_TARGET_FILE")
         if echo "$FILE_INFO" | grep -q "aarch64"; then
           echo "✅ 成功！文件为 64 位 ARM 架构："
           echo "   $FILE_INFO"
         else
           echo "❌ 失败！文件不是 aarch64 架构！"
           echo "📄 file 输出: $FILE_INFO"
-          rm -f $CORE_DIR/clash_meta
+          rm -f "$FULL_TARGET_FILE"
           exit 1
         fi
 
-        # 7. 输出版本信息
+        # 9. 输出版本信息
         echo "📋 Mihomo 版本信息:"
-        $FULL_CORE_DIR/clash_meta -v || echo "⚠️ 无法运行 clash_meta -v（可能静态编译限制）"
+        "$FULL_TARGET_FILE" -v || echo "⚠️ 无法运行 -v（可能静态限制）"
 
         echo "🎉 Mihomo 内核安装与验证完成！"
-
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
