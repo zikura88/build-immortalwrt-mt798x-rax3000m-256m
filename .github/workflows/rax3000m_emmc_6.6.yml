@@ -237,7 +237,7 @@ jobs:
 
         # 7. 输出版本信息
         echo "📋 Mihomo 版本信息:"
-        $CORE_DIR/clash_meta -v || echo "⚠️ 无法运行 clash_meta -v（可能静态编译限制）"
+        $FULL_CORE_DIR/clash_meta -v || echo "⚠️ 无法运行 clash_meta -v（可能静态编译限制）"
 
         echo "🎉 Mihomo 内核安装与验证完成！"
 
