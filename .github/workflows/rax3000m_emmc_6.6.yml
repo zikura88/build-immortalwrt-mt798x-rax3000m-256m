@@ -123,10 +123,14 @@ jobs:
         TIMEOUT=30
         # ================================================
 
+        # 获取当前工作目录（CI 工作区根目录）
+        ROOT_DIR=$(pwd)
+        FULL_CORE_DIR="$ROOT_DIR/$CORE_DIR"
+
         echo "🔧 准备安装 Mihomo 内核..."
 
         # 1. 创建核心目录
-        mkdir -p $CORE_DIR
+        mkdir -p "$FULL_CORE_DIR" || { echo "❌ 创建目录失败: $FULL_CORE_DIR"; exit 1; }
 
         # 2. 进入 openwrt 目录
         cd openwrt || { echo "❌ 进入 openwrt 目录失败"; exit 1; }
