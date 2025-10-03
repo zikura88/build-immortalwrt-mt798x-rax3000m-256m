@@ -30,7 +30,7 @@ env:
   UPLOAD_OUTPUT: true
   # OpenClash 配置
   CLASH_VERSION: latest          # 可改为 latest 或指定版本
-  CLASH_ARCH: armv7               # 根据你的设备架构设置：amd64 / arm64 / armv7
+  CLASH_ARCH: arm64              # 根据你的设备架构设置：amd64 / arm64 / armv7
   CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
@@ -114,30 +114,49 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/repo/$DIY_P3_SH
 
-    - name: Download OpenClash Core Binaries
+    - name: Download Mihomo (Clash Meta) Core from Prerelease-Alpha
       run: |
-        mkdir -p $CLASH_CORE_DIR
+        # ================= 配置区 =================
+        MIHOMO_REPO="MetaCubeX/mihomo"
+        RELEASE_TAG="Prerelease-Alpha"           # 固定发布标签
+        CORE_DIR="openwrt/files/etc/openclash/core"
+        ARCH="$CLASH_ARCH"                       # 来自 env: CLASH_ARCH=armv7
+        # ==========================================
 
-        # 下载 Clash TUN 内核
-        #CLASH_URL="https://github.com/vernesong/OpenClash/releases/download/${CLASH_VERSION}/clash-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
-        #echo "📥 下载 Clash 内核: $CLASH_URL"
-        #wget -O /tmp/clash.gz --no-check-certificate "$CLASH_URL" || { echo "❌ 下载 clash 失败"; exit 1; }
-        #gunzip /tmp/clash.gz
-        #mv /tmp/clash $CLASH_CORE_DIR/clash
-        #chmod +x $CLASH_CORE_DIR/clash
+        # 创建核心目录
+        mkdir -p $CORE_DIR
 
-        # 下载 Clash Meta 内核（可选）
-        META_URL="https://github.com/MetaCubeX/mihomo/releases/download/${CLASH_VERSION}/clash-meta-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
-        echo "📥 下载 Clash Meta 内核: $META_URL"
-        wget -O /tmp/clash-meta.gz --no-check-certificate "$META_URL" || { echo "⚠️ 下载 clash-meta 失败，可能该版本未提供"; }
-        if [ -f /tmp/clash-meta.gz ]; then
-          gunzip /tmp/clash-meta.gz
-          mv /tmp/clash-meta $CLASH_CORE_DIR/clash_meta
-          chmod +x $CLASH_CORE_DIR/clash_meta
+        echo "🔍 正在获取 $MIHOMO_REPO 的 '$RELEASE_TAG' 发布信息..."
+
+        # 获取匹配架构的 .gz 下载链接（支持 alpha 版本）
+        ASSET_URL=$(curl -s https://api.github.com/repos/$MIHOMO_REPO/releases/tags/$RELEASE_TAG | \
+          jq -r ".assets[].browser_download_url" | \
+          grep -i "linux-$ARCH" | \
+          grep -i "alpha" | \
+          grep -i "\.gz$")
+
+        if [ -z "$ASSET_URL" ]; then
+          echo "❌ 未找到适用于 linux-$ARCH 的 mihomo alpha 内核！"
+          echo "💡 可能原因：架构错误，或 release 中无此架构。"
+          exit 1
         fi
 
-        # 验证文件
-        ls -l $CLASH_CORE_DIR/
+        echo "📥 匹配到下载链接: $ASSET_URL"
+
+        # 下载并解压
+        wget -O /tmp/mihomo.gz --no-check-certificate "$ASSET_URL" || {
+          echo "❌ 下载失败，请检查网络或链接有效性。"
+          exit 1
+        }
+
+        gunzip /tmp/mihomo.gz
+        mv /tmp/mihomo $CORE_DIR/clash_meta
+        chmod +x $CORE_DIR/clash_meta
+
+        # 验证安装
+        echo "✅ 成功安装 Mihomo 内核:"
+        ls -l $CORE_DIR/clash_meta
+        $CORE_DIR/clash_meta -v
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
