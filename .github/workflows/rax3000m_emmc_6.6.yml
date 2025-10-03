@@ -120,7 +120,7 @@ jobs:
 
         # 下载 Clash TUN 内核
         #CLASH_URL="https://github.com/vernesong/OpenClash/releases/download/${CLASH_VERSION}/clash-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
-        echo "📥 下载 Clash 内核: $CLASH_URL"
+        #echo "📥 下载 Clash 内核: $CLASH_URL"
         #wget -O /tmp/clash.gz --no-check-certificate "$CLASH_URL" || { echo "❌ 下载 clash 失败"; exit 1; }
         #gunzip /tmp/clash.gz
         #mv /tmp/clash $CLASH_CORE_DIR/clash
