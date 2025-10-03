@@ -120,7 +120,7 @@ jobs:
         MIHOMO_REPO="MetaCubeX/mihomo"
         RELEASE_TAG="Prerelease-Alpha"
         CORE_DIR="openwrt/files/etc/openclash/core"
-        TIMEOUT=30  # wget 超时时间（秒）
+        TIMEOUT=30
         # ================================================
 
         echo "🔧 准备安装 Mihomo 内核..."
@@ -128,10 +128,10 @@ jobs:
         # 1. 创建核心目录
         mkdir -p $CORE_DIR
 
-        # 2. 自动检测 OpenWrt 目标架构
+        # 2. 进入 openwrt 目录
         cd openwrt || { echo "❌ 进入 openwrt 目录失败"; exit 1; }
+
         echo "🔍 检测 OpenWrt 编译目标架构..."
-        TARGET_SUBTARGET=$(grep CONFIG_TARGET_SUBTARGET .config | cut -d= -f2 | tr -d '"')
         TARGET_ARCH=$(grep CONFIG_TARGET_ARCH .config | cut -d= -f2 | tr -d '"')
 
         if [ -z "$TARGET_ARCH" ]; then
@@ -139,10 +139,22 @@ jobs:
           exit 1
         fi
 
-        echo "📌 子目标: $TARGET_SUBTARGET | 架构: $TARGET_ARCH"
+        echo "📌 原始架构: $TARGET_ARCH"
+
+        # === 修复点：提取通用架构名 ===
+        # 如果是 aarch64_xxx，提取为 aarch64
+        if [[ "$TARGET_ARCH" == aarch64* ]]; then
+          COMMON_ARCH="aarch64"
+        elif [[ "$TARGET_ARCH" == arm* ]]; then
+          COMMON_ARCH="arm"
+        else
+          COMMON_ARCH="$TARGET_ARCH"
+        fi
+
+        echo "🔄 提取通用架构: $COMMON_ARCH"
 
         # 映射到 mihomo 的架构命名
-        case "$TARGET_ARCH" in
+        case "$COMMON_ARCH" in
           "aarch64")
             MIHOMO_ARCH="arm64"
             ;;
@@ -156,21 +168,20 @@ jobs:
             MIHOMO_ARCH="386"
             ;;
           *)
-            echo "❌ 不支持的架构: $TARGET_ARCH"
+            echo "❌ 不支持的架构: $COMMON_ARCH"
             exit 1
             ;;
         esac
 
-        echo "🔄 映射为 Mihomo 架构: $MIHOMO_ARCH"
+        echo "✅ 映射为 Mihomo 架构: $MIHOMO_ARCH"
 
-        # 仅支持 arm64（防止误用 armv7）
+        # 强制只允许 arm64（防止误用）
         if [ "$MIHOMO_ARCH" != "arm64" ]; then
           echo "❌ 当前架构 ($MIHOMO_ARCH) 不受支持！本项目仅允许 arm64。"
-          echo "💡 请检查 .config 是否正确配置为 aarch64_cortex-a53。"
           exit 1
         fi
 
-        # 3. 获取 Prerelease-Alpha 中匹配的 asset URL
+        # 3. 获取 Release 中匹配的 asset URL
         echo "🌐 获取 GitHub Release 信息: $MIHOMO_REPO/releases/tag/$RELEASE_TAG"
         ASSET_URL=$(curl -s --fail "https://api.github.com/repos/$MIHOMO_REPO/releases/tags/$RELEASE_TAG" | \
           jq -r ".assets[].browser_download_url" | \
@@ -217,7 +228,6 @@ jobs:
         else
           echo "❌ 失败！文件不是 aarch64 架构！"
           echo "📄 file 输出: $FILE_INFO"
-          echo "💡 请检查下载逻辑或 GitHub 发布内容。"
           rm -f $CORE_DIR/clash_meta
           exit 1
         fi
