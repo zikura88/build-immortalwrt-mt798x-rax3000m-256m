@@ -29,8 +29,8 @@ env:
   DEVICE: rax3000m_emmc
   UPLOAD_OUTPUT: true
   # OpenClash 配置
-  CLASH_VERSION: v1.20.6          # 可改为 latest 或指定版本
-  CLASH_ARCH: amd64               # 根据你的设备架构设置：amd64 / arm64 / armv7
+  CLASH_VERSION: latest          # 可改为 latest 或指定版本
+  CLASH_ARCH: armv7               # 根据你的设备架构设置：amd64 / arm64 / armv7
   CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
@@ -127,7 +127,7 @@ jobs:
         #chmod +x $CLASH_CORE_DIR/clash
 
         # 下载 Clash Meta 内核（可选）
-        META_URL="https://github.com/vernesong/OpenClash/releases/download/${CLASH_VERSION}/clash-meta-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
+        META_URL="https://github.com/MetaCubeX/mihomo/releases/download/${CLASH_VERSION}/clash-meta-linux-${CLASH_ARCH}-${CLASH_VERSION}.gz"
         echo "📥 下载 Clash Meta 内核: $META_URL"
         wget -O /tmp/clash-meta.gz --no-check-certificate "$META_URL" || { echo "⚠️ 下载 clash-meta 失败，可能该版本未提供"; }
         if [ -f /tmp/clash-meta.gz ]; then
