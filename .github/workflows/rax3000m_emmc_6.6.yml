@@ -29,8 +29,7 @@ env:
   DEVICE: rax3000m_emmc
   UPLOAD_OUTPUT: true
   # OpenClash 配置
-  CLASH_VERSION: latest          # 可改为 latest 或指定版本
-  CLASH_ARCH: arm64              # 根据你的设备架构设置：amd64 / arm64 / armv7
+  CLASH_VERSION: latest          # 可改为 latest 或指定版本            # 根据你的设备架构设置：amd64 / arm64 / armv7
   CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
@@ -215,7 +214,7 @@ jobs:
         }
 
         # 5. 移动到目标位置
-        mv /tmp/mihomo $CORE_DIR/clash_meta
+        mv /tmp/mihomo $FULL_CORE_DIR/clash_meta
         chmod +x $CORE_DIR/clash_meta
 
         # 6. 校验文件类型（必须是 aarch64）
