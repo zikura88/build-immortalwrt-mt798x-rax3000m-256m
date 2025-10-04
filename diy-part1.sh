@@ -25,4 +25,4 @@ echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> ./feeds.conf
 #git clone https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
 git clone https://github.com/fw876/helloworld.git package/luci-app-ssr-plus
 git clone https://github.com/xiaorouji/openwrt-passwall2.git package/openwrt-passwall2
-git clone https://github.com/sbwml/openwrt_helloworld package/helloworld
+#git clone https://github.com/sbwml/openwrt_helloworld package/helloworld
