@@ -1,0 +1,270 @@
+# Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# Description: Build OpenWrt using GitHub Actions
+
+name: Build rax3000m_6.6
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+
+env:
+  REPO_URL: https://github.com/zikura88/immortalwrt-mt798x-6.6.git
+  REPO_BRANCH: openwrt-24.10-6.6
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: rax3000m_6.6_251003.config
+  DIY_P1_SH: diy-part1.sh
+  DIY_P3_SH: diy-part3.sh
+  TZ: Asia/Shanghai
+  DEVICE: rax3000m
+  UPLOAD_OUTPUT: true
+  # OpenClash 配置（可选，当前由脚本自动检测）
+  CLASH_VERSION: latest
+  CLASH_CORE_DIR: openwrt/files/etc/openclash/core
+
+jobs:
+  _rax3000m:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Repository (your repo with patches, config, scripts)
+      uses: actions/checkout@main
+      with:
+        path: repo
+
+    - name: 检查服务器配置
+      if: (!cancelled())
+      run: |
+        echo "警告⚠"
+        echo "若分配的服务器性能不足，务必及时取消，重新运行！"
+        echo "已知编译成功CPU型号：8370C,8171M"
+        echo "已知性能不足CPU型号：8272CL,E5系列"
+        echo "--------------------------CPU信息--------------------------"
+        echo "CPU物理数量:$(cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l)"
+        echo -e "CPU核心及版本信息：$(cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c) \n"
+        echo "--------------------------内存信息--------------------------"
+        echo "已安装内存详细信息："
+        sudo lshw -short -C memory | grep GiB
+        echo -e "\n"
+        echo "--------------------------硬盘信息--------------------------"
+        echo -e  "硬盘数量：$(ls /dev/sd* | grep -v [1-9] | wc -l) \n"
+        echo "硬盘详情："
+        df -Th
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2404) jq file
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /mnt/workdir
+        sudo chown $USER:$GROUPS /mnt/workdir
+
+    - name: Clone OpenWrt Source
+      working-directory: /mnt/workdir
+      run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /mnt/workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Load custom feeds
+      run: |
+        [ -e repo/$FEEDS_CONF ] && mv repo/$FEEDS_CONF openwrt/feeds.conf.default
+        [ -e repo/$DIY_P1_SH ] && chmod +x repo/$DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/repo/$DIY_P1_SH
+
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
+    - name: Replace libxcrypt Makefile with custom version
+      run: |
+        cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
+        echo "✅ Custom Makefile applied!"
+        ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
+
+    - name: Load custom configuration
+      run: |
+        [ -e repo/files ] && mv repo/files openwrt/files
+        [ -e repo/$CONFIG_FILE ] && mv repo/$CONFIG_FILE openwrt/.config
+        [ -e repo/$DIY_P3_SH ] && chmod +x repo/$DIY_P3_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/repo/$DIY_P3_SH
+
+    - name: Auto-Detect & Download Mihomo (arm64) with Validation
+      run: |
+        # ==================== 配置区 ====================
+        MIHOMO_REPO="MetaCubeX/mihomo"
+        RELEASE_TAG="Prerelease-Alpha"
+        CORE_DIR="openwrt/files/etc/openclash/core"
+        TIMEOUT=30
+        # ================================================
+
+        ROOT_DIR=$(pwd)
+        FULL_CORE_DIR="$ROOT_DIR/$CORE_DIR"
+        FULL_TARGET_FILE="$FULL_CORE_DIR/clash_meta"
+
+        echo "🔧 准备安装 Mihomo 内核..."
+
+        # 1. 确保目标目录存在
+        mkdir -p "$FULL_CORE_DIR" || { echo "❌ 创建目录失败: $FULL_CORE_DIR"; exit 1; }
+
+        # 2. 确保 .config 存在
+        if [ ! -f "openwrt/.config" ]; then
+          echo "❌ 错误：openwrt/.config 不存在！请确认配置文件已正确复制"
+          exit 1
+        fi
+
+        # 3. 检测架构
+        TARGET_ARCH=$(grep CONFIG_TARGET_ARCH openwrt/.config | cut -d= -f2 | tr -d '"')
+        if [ -z "$TARGET_ARCH" ]; then
+          echo "❌ 无法读取 .config 中的架构信息！"
+          exit 1
+        fi
+        echo "📌 原始架构: $TARGET_ARCH"
+
+        # 提取通用架构
+        if [[ "$TARGET_ARCH" == aarch64* ]]; then
+          COMMON_ARCH="aarch64"
+        elif [[ "$TARGET_ARCH" == arm* ]]; then
+          COMMON_ARCH="arm"
+        else
+          COMMON_ARCH="$TARGET_ARCH"
+        fi
+        echo "🔄 提取通用架构: $COMMON_ARCH"
+
+        # 映射到 mihomo 架构
+        case "$COMMON_ARCH" in
+          "aarch64") MIHOMO_ARCH="arm64" ;;
+          "arm")     MIHOMO_ARCH="armv7" ;;
+          "x86_64")  MIHOMO_ARCH="amd64" ;;
+          "i386")    MIHOMO_ARCH="386" ;;
+          *)         echo "❌ 不支持的架构: $COMMON_ARCH"; exit 1 ;;
+        esac
+        echo "✅ 映射为 Mihomo 架构: $MIHOMO_ARCH"
+
+        # 仅允许 arm64
+        if [ "$MIHOMO_ARCH" != "arm64" ]; then
+          echo "❌ 当前架构 ($MIHOMO_ARCH) 不受支持！本项目仅允许 arm64。"
+          exit 1
+        fi
+
+        # 4. 获取 Release 资产 URL
+        echo "🌐 获取 GitHub Release 信息..."
+        ASSET_URL=$(curl -s --fail "https://api.github.com/repos/$MIHOMO_REPO/releases/tags/$RELEASE_TAG" | \
+          jq -r '.assets[].browser_download_url' | \
+          grep -i "linux-$MIHOMO_ARCH" | \
+          grep -i "alpha" | \
+          grep -i "\.gz$" | \
+          head -n1)
+
+        if [ -z "$ASSET_URL" ]; then
+          echo "❌ 未找到 mihomo-linux-$MIHOMO_ARCH-alpha*.gz 文件！"
+          echo "💡 可能原因：网络问题、API 限流、版本未发布"
+          exit 1
+        fi
+        echo "✅ 找到匹配内核: $ASSET_URL"
+
+        # 5. 下载
+        echo "📥 开始下载 mihomo 内核..."
+        wget -O /tmp/mihomo.gz --no-check-certificate --timeout=$TIMEOUT --tries=3 "$ASSET_URL" || {
+          echo "❌ 下载失败，请检查网络"
+          exit 1
+        }
+
+        # 6. 解压
+        gunzip /tmp/mihomo.gz || {
+          echo "❌ 解压失败，请检查文件完整性"
+          rm -f /tmp/mihomo.gz
+          exit 1
+        }
+
+        # 7. 移动并设置权限（✅ 使用绝对路径 + ✅ 检查失败）
+        mv /tmp/mihomo "$FULL_TARGET_FILE" || {
+          echo "❌ 移动文件失败！目标路径: $FULL_TARGET_FILE"
+          echo "📁 检查父目录:"
+          ls -la "$ROOT_DIR/openwrt/files/etc/openclash/" || echo "❌ 目录不存在"
+          exit 1
+        }
+        chmod +x "$FULL_TARGET_FILE"
+
+        # 8. 校验文件类型
+        echo "🧪 校验内核文件类型..."
+        FILE_INFO=$(file "$FULL_TARGET_FILE")
+        if echo "$FILE_INFO" | grep -q "aarch64"; then
+          echo "✅ 成功！文件为 64 位 ARM 架构："
+          echo "   $FILE_INFO"
+        else
+          echo "❌ 失败！文件不是 aarch64 架构！"
+          echo "📄 file 输出: $FILE_INFO"
+          rm -f "$FULL_TARGET_FILE"
+          exit 1
+        fi
+
+        # 9. 输出版本信息
+        echo "📋 Mihomo 版本信息:"
+        "$FULL_TARGET_FILE" -v || echo "⚠️ 无法运行 -v（可能静态限制）"
+
+        echo "🎉 Mihomo 内核安装与验证完成！"
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    - name: Download package
+      id: package
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: 编译固件
+      run: |
+        cd openwrt
+        make -j$(nproc)
+        echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    - name: 上传输出文件
+      uses: actions/upload-artifact@v4
+      if: env.UPLOAD_OUTPUT == 'true' && !cancelled()
+      with:
+        name: ${{ env.DEVICE }}--${{ env.FILE_DATE }}
+        path: openwrt/bin
+
+    - name: 整理输出文件
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+
+    - name: 发布固件至 Release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: "${{ env.DEVICE }}--${{ env.FILE_DATE }}"
+        artifacts: "openwrt/bin/targets/*/*/*"
+        body: |
+          # 未测试×
+          
+          IP: 192.168.5.1 | Password: none
