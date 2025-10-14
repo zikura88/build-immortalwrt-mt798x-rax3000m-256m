@@ -27,5 +27,5 @@ echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.defa
 git clone https://github.com/fw876/helloworld.git package/luci-app-ssr-plus
 git clone https://github.com/xiaorouji/openwrt-passwall2.git package/openwrt-passwall2
 #git clone https://github.com/sbwml/openwrt_helloworld package/helloworld
-rm -rf feeds/packages/lang/golang
-git clone https://github.com/kenzok8/golang feeds/packages/lang/golang
+#rm -rf feeds/packages/lang/golang
+#git clone https://github.com/kenzok8/golang feeds/packages/lang/golang
