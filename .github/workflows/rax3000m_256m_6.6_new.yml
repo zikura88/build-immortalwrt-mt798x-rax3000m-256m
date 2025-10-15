@@ -6,7 +6,7 @@
 # https://github.com/P3TERX/Actions-OpenWrt
 # Description: Build OpenWrt using GitHub Actions
 
-name: Build rax3000m_emmc_6.6
+name: Build rax3000m_256_6.6
 
 on:
   repository_dispatch:
@@ -21,18 +21,18 @@ env:
   REPO_URL: https://github.com/zikura88/immortalwrt-mt798x-6.6.git
   REPO_BRANCH: openwrt-24.10-6.6
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: rax3000m_emmc_6.6_251014.config
+  CONFIG_FILE: rax3000m_256m_6.6_251014.config
   DIY_P1_SH: diy-part1.sh
   DIY_P3_SH: diy-part3.sh
   TZ: Asia/Shanghai
-  DEVICE: rax3000m_emmc
+  DEVICE: rax3000m_256m
   UPLOAD_OUTPUT: true
   # OpenClash 配置（可选，当前由脚本自动检测）
   CLASH_VERSION: latest
   CLASH_CORE_DIR: openwrt/files/etc/openclash/core
 
 jobs:
-  _rax3000m_emmc:
+  _rax3000m_256m:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
