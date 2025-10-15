@@ -93,17 +93,16 @@ jobs:
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      run: cd openwrt && ./scripts/feeds install -a -f
 
-    - name: Replace libxcrypt Makefile with custom version
-      run: |
-        cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
-        echo "✅ Custom Makefile applied!"
-        ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
+    #- name: Replace libxcrypt Makefile with custom version
+     # run: |
+        #cp repo/custom-files/libxcrypt-Makefile openwrt/feeds/packages/libs/libxcrypt/Makefile
+       # echo "✅ Custom Makefile applied!"
+       # ls -l openwrt/feeds/packages/libs/libxcrypt/Makefile
 
     - name: Load custom configuration
       run: |
-        [ -e repo/files ] && mv repo/files openwrt/files
         [ -e repo/$CONFIG_FILE ] && mv repo/$CONFIG_FILE openwrt/.config
         [ -e repo/$DIY_P3_SH ] && chmod +x repo/$DIY_P3_SH
         cd openwrt
