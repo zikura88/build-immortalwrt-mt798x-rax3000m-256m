@@ -24,9 +24,9 @@ env:
   REPO_URL: https://github.com/zikura88/immortalwrt-mt798x-6.6.git
   REPO_BRANCH: openwrt-24.10-6.6
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: rax3000m_256m_6.6_251016.config
+  CONFIG_FILE: rax3000m_256m_6.6_251017.config
   DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2.sh  
+  #DIY_P2_SH: diy-part2.sh  
   DIY_P3_SH: diy-part3.sh
   TZ: Asia/Shanghai
   DEVICE: rax3000m_256m
