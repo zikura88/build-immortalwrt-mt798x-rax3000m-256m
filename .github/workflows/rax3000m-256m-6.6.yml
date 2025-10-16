@@ -1,4 +1,5 @@
 
+
 # Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
 #
 # This is free software, licensed under the MIT License.
@@ -93,7 +94,7 @@ jobs:
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      run: cd openwrt && ./scripts/feeds install -a f
 
     - name: Replace libxcrypt Makefile with custom version
       run: |
@@ -152,3 +153,6 @@ jobs:
         tag: "${{ env.DEVICE }}--${{ env.FILE_DATE }}"
         artifacts: "openwrt/bin/targets/*/*/*"
         body: |
+         # 未测试×
+          
+          IP: 192.168.5.1 | Password: none
